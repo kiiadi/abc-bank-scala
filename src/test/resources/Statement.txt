@@ -1,0 +1,18 @@
+Statement for Sean Walsh
+
+Checking account
+  deposit $1000.00
+  withdrawal $500.00
+Total $500.00
+
+Savings account
+  deposit $2000.00
+  withdrawal $1000.00
+Total $1000.00
+
+MaxiSavings account
+  deposit $3000.00
+  withdrawal $2000.00
+Total $1000.00
+
+Total In All Accounts $2500.00

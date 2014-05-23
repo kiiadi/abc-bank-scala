@@ -1,20 +1,17 @@
 package com.abc
 
-import java.util.Calendar
-import java.util.Date
+import org.joda.time.DateTime
 
-object DateProvider {
-  def getInstance: DateProvider = {
-    if (instance == null) instance = new DateProvider
-    instance
-  }
-
-  private var instance: DateProvider = null
+/**
+ * A DateProvider trait.
+ */
+trait DateProvider {
+  def now: Long
 }
 
-class DateProvider {
-  def now: Date = {
-    return Calendar.getInstance.getTime
-  }
+/**
+ * Default DateProvider using joda.
+ */
+class DefaultDateProvider extends DateProvider {
+  override def now = new DateTime().getMillis
 }
-
