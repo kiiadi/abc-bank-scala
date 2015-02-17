@@ -2,11 +2,37 @@ package com.abc
 
 import scala.collection.mutable.ListBuffer
 
-class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer()) {
+case class TransferFailedOperation(reason: String)
+case class TransferSuccessOperation()
+
+
+/**
+ * Customer 
+ */
+class Customer(val name: String, val accounts: ListBuffer[Account] = ListBuffer()) {
 
   def openAccount(account: Account): Customer = {
     accounts += account
     this
+  }
+  
+  /**
+   * This implmentation is incomplete without ensuring the Atomicity of the transfer operation - but
+   * for this implementation atomicity is assumed.
+   */
+  def transferFunds(fromAccount : Account, toAccount : Account, amount : Double) : Either[TransferFailedOperation,TransferSuccessOperation ] = {
+    
+    // Check the amount to be transfered
+    if(amount <= 0) Left(TransferFailedOperation("Invalid transfer amount"))
+    else {
+      fromAccount.withdraw(amount)
+      toAccount.deposit(amount)
+      Right(new TransferSuccessOperation)
+      
+    }
+    
+    
+    
   }
 
   def numberOfAccounts: Int = accounts.size
@@ -17,14 +43,10 @@ class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer(
    * This method gets a statement
    */
   def getStatement: String = {
-    //JIRA-123 Change by Joe Bloggs 29/7/1988 start
-    var statement: String = null //reset statement to null here
-    //JIRA-123 Change by Joe Bloggs 29/7/1988 end
     val totalAcrossAllAccounts = accounts.map(_.sumTransactions()).sum
-    statement = f"Statement for $name\n" +
+    f"Statement for $name\n" +
       accounts.map(statementForAccount).mkString("\n", "\n\n", "\n") +
       s"\nTotal In All Accounts ${toDollars(totalAcrossAllAccounts)}"
-    statement
   }
 
   private def statementForAccount(a: Account): String = {
@@ -51,4 +73,3 @@ class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer(
 
   private def toDollars(number: Double): String = f"$$$number%.2f"
 }
-

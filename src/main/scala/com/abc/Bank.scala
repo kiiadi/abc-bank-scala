@@ -2,13 +2,21 @@ package com.abc
 
 import scala.collection.mutable.ListBuffer
 
-class Bank {
-  var customers = new ListBuffer[Customer]
+/**
+ * Bank class defines methods to add customers to a Bank and get customer summary for all the customers.
+ */
+class Bank(val customers: ListBuffer[Customer] = ListBuffer()) {
 
+  /**
+   * Add Customer
+   */
   def addCustomer(customer: Customer) {
     customers += customer
   }
 
+  /**
+   * Get Customers Summary for the Bank 
+   */
   def customerSummary: String = {
     var summary: String = "Customer Summary"
     for (customer <- customers)
@@ -20,25 +28,9 @@ class Bank {
     number + " " + (if (number == 1) word else word + "s")
   }
 
-  def totalInterestPaid: Double = {
-    var total: Double = 0
-    for (c <- customers) total += c.totalInterestEarned
-    return total
-  }
+  def totalInterestPaid: Double = customers.map(_.totalInterestEarned).sum
 
-  def getFirstCustomer: String = {
-    try {
-      customers = null
-      customers(0).name
-    }
-    catch {
-      case e: Exception => {
-        e.printStackTrace
-        return "Error"
-      }
-    }
-  }
+  def getFirstCustomer: String = if (customers.size > 0) customers(0).name else "No Customers"
 
 }
-
 

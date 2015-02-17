@@ -1,7 +1,10 @@
 package com.abc
 
 import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 
+@RunWith(classOf[JUnitRunner])
 class BankTest extends FlatSpec with Matchers {
 
   "Bank" should "customer summary" in {
@@ -34,6 +37,10 @@ class BankTest extends FlatSpec with Matchers {
     bank.addCustomer(new Customer("Bill").openAccount(checkingAccount))
     checkingAccount.deposit(3000.0)
     bank.totalInterestPaid should be(170.0)
+  }
+  it should "get first customer" in {
+    val bank : Bank = new Bank
+    bank.getFirstCustomer should be ("No Customers")
   }
 
 }
