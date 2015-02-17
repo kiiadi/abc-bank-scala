@@ -4,17 +4,5 @@ import java.util.Calendar
 import java.util.Date
 
 object DateProvider {
-  def getInstance: DateProvider = {
-    if (instance == null) instance = new DateProvider
-    instance
-  }
-
-  private var instance: DateProvider = null
+  def now: Date = Calendar.getInstance.getTime
 }
-
-class DateProvider {
-  def now: Date = {
-    return Calendar.getInstance.getTime
-  }
-}
-
