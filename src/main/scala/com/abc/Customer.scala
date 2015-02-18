@@ -1,6 +1,7 @@
 package com.abc
 
 import scala.collection.mutable.ListBuffer
+import com.abc.AccountType._
 
 case class TransferFailedOperation(reason: String)
 case class TransferSuccessOperation()
@@ -9,17 +10,9 @@ case class TransferSuccessOperation()
 /**
  * Customer 
  */
-class Customer(val name: String, val accounts: ListBuffer[Account] = ListBuffer()) {
+case class Customer(val name: String)
 
-  def openAccount(account: Account): Customer = {
-    accounts += account
-    this
-  }
-  
-  /**
-   * This implmentation is incomplete without ensuring the Atomicity of the transfer operation - but
-   * for this implementation atomicity is assumed.
-   */
+  /*
   def transferFunds(fromAccount : Account, toAccount : Account, amount : Double) : Either[TransferFailedOperation,TransferSuccessOperation ] = {
     
     // Check the amount to be transfered
@@ -51,11 +44,11 @@ class Customer(val name: String, val accounts: ListBuffer[Account] = ListBuffer(
 
   private def statementForAccount(a: Account): String = {
     val accountType = a.accountType match {
-      case Account.CHECKING =>
+      case AccountType.CHECKING =>
         "Checking Account\n"
-      case Account.SAVINGS =>
+      case AccountType.SAVINGS =>
         "Savings Account\n"
-      case Account.MAXI_SAVINGS =>
+      case AccountType.MAXI_SAVINGS =>
         "Maxi Savings Account\n"
     }
     val transactionSummary = a.transactions.map(t => withdrawalOrDepositText(t) + " " + toDollars(t.amount.abs))
@@ -72,4 +65,6 @@ class Customer(val name: String, val accounts: ListBuffer[Account] = ListBuffer(
     }
 
   private def toDollars(number: Double): String = f"$$$number%.2f"
-}
+  * 
+  */
+

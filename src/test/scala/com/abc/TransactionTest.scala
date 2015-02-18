@@ -7,7 +7,7 @@ import org.junit.runner.RunWith
 @RunWith(classOf[JUnitRunner])
 class TransactionTest extends FlatSpec with Matchers {
   "Transaction" should "type" in {
-    val t = new Transaction(5)
+    val t = new Transaction(5, DateProvider().now)
     t.isInstanceOf[Transaction] should be(true)
   }
 }
