@@ -28,8 +28,8 @@ class Bank {
 
   def getFirstCustomer: String = {
     try {
-      customers = null
-      customers(0).name
+      
+      if (customers.size > 0) customers(0).name else ""
     }
     catch {
       case e: Exception => {

@@ -7,4 +7,9 @@ class TransactionTest extends FlatSpec with Matchers {
     val t = new Transaction(5)
     t.isInstanceOf[Transaction] should be(true)
   }
+  
+  "Transaction" should "have the amount of 5" in {
+    val t = new Transaction(5)
+    t.amount should be (5)
+  }
 }
