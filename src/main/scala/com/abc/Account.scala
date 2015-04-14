@@ -19,8 +19,7 @@ case class Account(val accountType: AccountType.Value, val accountNumber:String,
       transactions += new Transaction(amount)
     }
   }
-  
-  //def getTransactions = transactions
+
   def getInterestEarned = accruedInterest
   def getTransactionCount = transactions.size
   
@@ -37,17 +36,7 @@ case class Account(val accountType: AccountType.Value, val accountNumber:String,
   
   
   
-  /*
-   * Attempt to calculate the daily nterest rate
-   * as a recursive function but it would be complicated and maybe unmaintainable
-   * It may be doable but not practical
-  def calcDailyInterest : Double=  {
-   
-    }
-  
-  }
-  * */
-  
+ 
 
  
   /*
