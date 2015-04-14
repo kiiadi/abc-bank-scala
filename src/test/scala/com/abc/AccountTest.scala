@@ -16,7 +16,7 @@ class AccountTest extends FlatSpec with Matchers {
     val savingsAccount: Account = Account(AccountType.SAVINGS, "S1")
 
     checkingAccount.deposit(10)
-    checkingAccount.getTransactions.size should equal(1)
+    checkingAccount.getTransactionCount should equal(1)
   }
 
   it should "fail when we withdraw negative amounts" in {

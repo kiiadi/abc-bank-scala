@@ -63,18 +63,12 @@ case class Customer(val name: String, private var accounts: Map[String ,Account]
       case AccountType.MAXI_SAVINGS =>
         "Maxi Savings Account\n"
     }
-    val transactionSummary = a.getTransactions.map(t => withdrawalOrDepositText(t) + " " + toDollars(t.amount.abs))
-      .mkString("  ", "\n  ", "\n")
-    val totalSummary = s"Total ${toDollars(a.getTransactions.map(_.amount).sum)}"
+    val transactionSummary = a.getTransactionSummary
+    val totalSummary = s"Total ${toDollars(a.sumTransactions())}"
     accountType + transactionSummary + totalSummary
   }
 
-  private def withdrawalOrDepositText(t: Transaction) =
-    t.amount match {
-      case a if a < 0 => "withdrawal"
-      case a if a > 0 => "deposit"
-      case _ => "N/A"
-    }
+
 
   private def toDollars(number: Double): String = f"$$$number%.2f"
 }

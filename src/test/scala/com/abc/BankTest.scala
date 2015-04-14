@@ -8,6 +8,7 @@ class BankTest extends FlatSpec with Matchers {
     val bank: Bank = new Bank
     val john: Customer =  Customer("John").openAccount( Account(AccountType.CHECKING,"1"))
     bank.addCustomer(john)
+   
     bank.customerSummary should be("Customer Summary\n - John (1 account)")
   }
   
@@ -26,7 +27,7 @@ class BankTest extends FlatSpec with Matchers {
     bank.addCustomer(john)
     val paul: Customer =  Customer("Paul").openAccount( Account(AccountType.SAVINGS,"B1"))
     bank.addCustomer(paul)
-   bank.customers.size should be (2)
+   bank.noOfCustomer should be (2)
   }
     
     "Bank" should "should return the name of the first customer" in {

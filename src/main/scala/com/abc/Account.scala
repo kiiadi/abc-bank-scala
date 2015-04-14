@@ -20,8 +20,13 @@ case class Account(val accountType: AccountType.Value, val accountNumber:String,
     }
   }
   
-  def getTransactions = transactions
+  //def getTransactions = transactions
   def getInterestEarned = accruedInterest
+  def getTransactionCount = transactions.size
+  
+  
+  def getTransactionSummary = transactions.map(t => t.toString)
+      .mkString("  ", "\n  ", "\n")
 
   def withdraw(amount: Double) {
      require(amount >= 0 && sumTransactions() > amount , "amount must be greater than zero");
@@ -35,7 +40,7 @@ case class Account(val accountType: AccountType.Value, val accountNumber:String,
   /*
    * Attempt to calculate the daily nterest rate
    * as a recursive function but it would be complicated and maybe unmaintainable
-   * It may be doable
+   * It may be doable but not practical
   def calcDailyInterest : Double=  {
    
     }
@@ -48,15 +53,16 @@ case class Account(val accountType: AccountType.Value, val accountNumber:String,
   /*
    * This method calculates the daily interest rate that is accumulated
    * THis is expected to be executed in some kind of batch process
+   * assuming 365 days in a year for interest calc basis
    */
   def interestEarned: Double = {
     val amount: Double = sumTransactions() + accruedInterest
     accountType match {
       case AccountType.SAVINGS =>
-        if (amount <= 1000) amount * 0.001/365
+        if (amount <= 1000) amount * 0.001/365.0
         else 1/365.0 + (amount - 1000) * 0.002 / 365.0
       case AccountType.MAXI_SAVINGS =>
-       if (daysSinceLastWithDrawal < 10) amount *.001/365.0 else amount * .05 /365
+       if (daysSinceLastWithDrawal < 10) amount *.001/365.0 else amount * .05 /365.0
       case AccountType.CHECKING => amount * .001 / 365.0
       case _ => 0 
       
