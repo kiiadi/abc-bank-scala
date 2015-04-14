@@ -43,6 +43,10 @@ case class Account(val accountType: AccountType.Value, val accountNumber:String,
    * This method calculates the daily interest rate that is accumulated
    * THis is expected to be executed in some kind of batch process
    * assuming 365 days in a year for interest calc basis
+   * I am accumulating the daily accrued interest in a field here
+   * Option B was to calculate it daily on the fly . I think we may not want to do that because of performance issues
+   * 
+   * 
    */
   def interestEarned: Double = {
     val amount: Double = sumTransactions() + accruedInterest
