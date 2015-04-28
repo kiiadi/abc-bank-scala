@@ -1,44 +1,66 @@
 package com.abc
 
 import scala.collection.mutable.ListBuffer
+import java.util.Calendar
+import java.util.Calendar._
 
-object Account {
-  final val CHECKING: Int = 0
-  final val SAVINGS: Int = 1
-  final val MAXI_SAVINGS: Int = 2
-}
+abstract class Account() {
+  val transactions: ListBuffer[Transaction] = ListBuffer()
+  private var total = 0.0
 
-class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = ListBuffer()) {
+  def description: String
+  def interestEarned: Double
 
   def deposit(amount: Double) {
     if (amount <= 0)
       throw new IllegalArgumentException("amount must be greater than zero")
-    else
-      transactions += Transaction(amount)
+    
+    transactions += Transaction(amount)
+    total += amount
   }
 
   def withdraw(amount: Double) {
     if (amount <= 0)
       throw new IllegalArgumentException("amount must be greater than zero")
-    else
-      transactions += Transaction(-amount)
+
+    transactions += Transaction(-amount)
+    total -= amount
   }
 
+  def sumTransactions(checkAllTransactions: Boolean = true): Double = total
+
+}
+
+class CheckingAccount extends Account {
+  def description = "Checking Account"
   def interestEarned: Double = {
     val amount: Double = sumTransactions()
-    accountType match {
-      case Account.SAVINGS =>
-        if (amount <= 1000) amount * 0.001
-        else 1 + (amount - 1000) * 0.002
-      case Account.MAXI_SAVINGS =>
-        if (amount <= 1000) return amount * 0.02
-        if (amount <= 2000) return 20 + (amount - 1000) * 0.05
-        70 + (amount - 2000) * 0.1
-      case _ =>
-        amount * 0.001
-    }
+    amount * 0.001
   }
+}
 
-  def sumTransactions(checkAllTransactions: Boolean = true): Double = transactions.map(_.amount).sum
+class SavingAccount extends Account {
+  def description = "Savings Account"
+  def interestEarned: Double = {
+    val amount: Double = sumTransactions()
 
+    if (amount <= 1000) amount * 0.001
+    else 1 + (amount - 1000) * 0.002
+  }
+}
+
+class MaxiSavingAccount extends Account {
+  def description = "Maxi Savings Account"
+  def interestEarned: Double = {
+    val amount: Double = sumTransactions()
+
+    val calendar = Calendar.getInstance();
+    calendar.add(Calendar.DAY_OF_MONTH, -10)
+    val tenDaysAgo = calendar.getTime
+
+    if (!transactions.exists(t => t.date.after(tenDaysAgo) && t.amount < 0))
+      amount * 0.05
+    else 
+      amount * 0.001
+  }
 }
