@@ -4,9 +4,9 @@ import org.scalatest.{Matchers, FlatSpec}
 
 class CustomerTest extends FlatSpec with Matchers {
   "Customer" should "statement" in {
-    val checkingAccount: Account = new Account(Account.CHECKING)
-    val savingsAccount: Account = new Account(Account.SAVINGS)
-    val henry: Customer = new Customer("Henry").openAccount(checkingAccount).openAccount(savingsAccount)
+    val checkingAccount = new Account(Account.AccountType.CHECKING)
+    val savingsAccount = new Account(Account.AccountType.SAVINGS)
+    val henry = new Customer("Henry").openAccount(checkingAccount).openAccount(savingsAccount)
     checkingAccount.deposit(100.0)
     savingsAccount.deposit(4000.0)
     savingsAccount.withdraw(200.0)
@@ -17,19 +17,19 @@ class CustomerTest extends FlatSpec with Matchers {
   }
 
   it should "testOneAccount" in {
-    val oscar: Customer = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
+    val oscar = new Customer("Oscar").openAccount(new Account(Account.AccountType.SAVINGS))
     oscar.numberOfAccounts should be(1)
   }
 
   it should "testTwoAccount" in {
-    val oscar: Customer = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
-    oscar.openAccount(new Account(Account.CHECKING))
+    val oscar = new Customer("Oscar").openAccount(new Account(Account.AccountType.SAVINGS))
+    oscar.openAccount(new Account(Account.AccountType.CHECKING))
     oscar.numberOfAccounts should be(2)
   }
 
   ignore should "testThreeAcounts" in {
-    val oscar: Customer = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
-    oscar.openAccount(new Account(Account.CHECKING))
+    val oscar = new Customer("Oscar").openAccount(new Account(Account.AccountType.SAVINGS))
+    oscar.openAccount(new Account(Account.AccountType.CHECKING))
     oscar.numberOfAccounts should be(3)
   }
 }
