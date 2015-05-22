@@ -1,14 +1,19 @@
 package com.abc
 
+import com.abc.Account.AccountType.AccountType
+
 import scala.collection.mutable.ListBuffer
 
 object Account {
-  final val CHECKING: Int = 0
-  final val SAVINGS: Int = 1
-  final val MAXI_SAVINGS: Int = 2
+  object AccountType extends Enumeration {
+    type AccountType = Value
+
+    val CHECKING, SAVINGS, MAXI_SAVINGS = Value
+  }
 }
 
-class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = ListBuffer()) {
+class Account(val accountType: AccountType, val transactions: ListBuffer[Transaction] = ListBuffer()) {
+  implicit val dateProvider = DateProvider.getInstance
 
   def deposit(amount: Double) {
     if (amount <= 0)
@@ -27,13 +32,13 @@ class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = 
   def interestEarned: Double = {
     val amount: Double = sumTransactions()
     accountType match {
-      case Account.SAVINGS =>
+      case Account.AccountType.SAVINGS =>
         if (amount <= 1000) amount * 0.001
         else 1 + (amount - 1000) * 0.002
-      case Account.MAXI_SAVINGS =>
-        if (amount <= 1000) return amount * 0.02
-        if (amount <= 2000) return 20 + (amount - 1000) * 0.05
-        70 + (amount - 2000) * 0.1
+      case Account.AccountType.MAXI_SAVINGS =>
+        if (amount <= 1000) amount * 0.02
+        else if (amount <= 2000) 20 + (amount - 1000) * 0.05
+        else 70 + (amount - 2000) * 0.1
       case _ =>
         amount * 0.001
     }

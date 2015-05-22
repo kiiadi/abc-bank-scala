@@ -3,18 +3,16 @@ package com.abc
 import java.util.Calendar
 import java.util.Date
 
+trait DateProvider {
+  def now: Date
+}
+
 object DateProvider {
-  def getInstance: DateProvider = {
-    if (instance == null) instance = new DateProvider
-    instance
+
+  lazy val getInstance: DateProvider = new DateProvider {
+    override def now: Date = Calendar.getInstance.getTime
   }
 
-  private var instance: DateProvider = null
 }
 
-class DateProvider {
-  def now: Date = {
-    return Calendar.getInstance.getTime
-  }
-}
 

@@ -1,42 +1,30 @@
 package com.abc
 
-import scala.collection.mutable.ListBuffer
-
 class Bank {
-  var customers = new ListBuffer[Customer]
+  var customers = List[Customer]()
 
   def addCustomer(customer: Customer) {
-    customers += customer
+    customers = customers :+ customer
   }
 
   def customerSummary: String = {
-    var summary: String = "Customer Summary"
-    for (customer <- customers)
-      summary = summary + "\n - " + customer.name + " (" + format(customer.numberOfAccounts, "account") + ")"
-    summary
+    val summaryTitle: String = "Customer Summary\n - "
+
+    val summary = customers.map(customer => s"${customer.name} (${format(customer.numberOfAccounts, "account")})").mkString("\n - ")
+
+    summaryTitle + summary
   }
 
   private def format(number: Int, word: String): String = {
-    number + " " + (if (number == 1) word else word + "s")
+    val msg = s"$number $word"
+    if (number == 1) msg else s"${msg}s"
   }
 
-  def totalInterestPaid: Double = {
-    var total: Double = 0
-    for (c <- customers) total += c.totalInterestEarned
-    return total
-  }
+  def totalInterestPaid: Double = customers.map(_.totalInterestEarned).sum
 
-  def getFirstCustomer: String = {
-    try {
-      customers = null
-      customers(0).name
-    }
-    catch {
-      case e: Exception => {
-        e.printStackTrace
-        return "Error"
-      }
-    }
+  def getFirstCustomer: String = customers match {
+    case head :: _ => head.name
+    case _ => "Error"
   }
 
 }

@@ -1,6 +1,6 @@
 package com.abc
 
-case class Transaction(var amount: Double) {
-  val transactionDate = DateProvider.getInstance.now
+case class Transaction(amount: Double)(implicit dateProvider: DateProvider) {
+  val transactionDate = dateProvider.now
 }
 
