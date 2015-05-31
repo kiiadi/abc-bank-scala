@@ -25,7 +25,7 @@ class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = 
   }
 
   def interestEarned: Double = {
-    val amount: Double = sumTransactions()
+    val amount: Double = getBalance
     accountType match {
       case Account.SAVINGS =>
         if (amount <= 1000) amount * 0.001
@@ -39,6 +39,6 @@ class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = 
     }
   }
 
-  def sumTransactions(checkAllTransactions: Boolean = true): Double = transactions.map(_.amount).sum
+  def getBalance: Double = transactions.map(_.amount).sum
 
 }

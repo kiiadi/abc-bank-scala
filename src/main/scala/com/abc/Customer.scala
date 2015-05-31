@@ -13,15 +13,20 @@ class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer(
 
   def totalInterestEarned: Double = accounts.map(_.interestEarned).sum
 
+  def transfer(amount: Double, from: Account, to: Account) {
+    if (!(accounts.contains(from) && accounts.contains(to))) {
+      throw new IllegalArgumentException("account is not one of the customers accounts")
+    }
+    from.withdraw(amount)
+    to.deposit(amount)
+  }
+
   /**
    * This method gets a statement
    */
   def getStatement: String = {
-    //JIRA-123 Change by Joe Bloggs 29/7/1988 start
-    var statement: String = null //reset statement to null here
-    //JIRA-123 Change by Joe Bloggs 29/7/1988 end
-    val totalAcrossAllAccounts = accounts.map(_.sumTransactions()).sum
-    statement = f"Statement for $name\n" +
+    val totalAcrossAllAccounts = accounts.map(_.getBalance).sum
+    val statement = f"Statement for $name\n" +
       accounts.map(statementForAccount).mkString("\n", "\n\n", "\n") +
       s"\nTotal In All Accounts ${toDollars(totalAcrossAllAccounts)}"
     statement

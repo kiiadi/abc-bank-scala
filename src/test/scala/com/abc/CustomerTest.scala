@@ -53,4 +53,35 @@ class CustomerTest extends FlatSpec with Matchers {
 
     fred.totalInterestEarned should be(2.1)
   }
+
+  it should "transfer between accounts" in {
+    val fred = new Customer("Fred")
+    val checkingAccount = new Account(Account.CHECKING)
+    fred.openAccount(checkingAccount)
+    checkingAccount.deposit(100.0)
+
+    val savingsAccount = new Account(Account.SAVINGS)
+    fred.openAccount(savingsAccount)
+
+    fred.transfer(10.0, checkingAccount, savingsAccount)
+
+    checkingAccount.getBalance should be(90.0)
+    savingsAccount.getBalance should be(10.0)
+  }
+
+  it should "transfer from invalid account" in {
+    val fred = new Customer("Fred")
+    val savingsAccount = new Account(Account.SAVINGS)
+    fred.openAccount(savingsAccount)
+    an [IllegalArgumentException] should be thrownBy
+      fred.transfer(50.0, new Account(Account.CHECKING), savingsAccount)
+  }
+
+  it should "transfer to invalid account" in {
+    val fred = new Customer("Fred")
+    val savingsAccount = new Account(Account.SAVINGS)
+    fred.openAccount(savingsAccount)
+    an [IllegalArgumentException] should be thrownBy
+      fred.transfer(50.0, savingsAccount, new Account(Account.CHECKING))
+  }
 }
