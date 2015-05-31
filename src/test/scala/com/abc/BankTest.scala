@@ -4,11 +4,28 @@ import org.scalatest.{Matchers, FlatSpec}
 
 class BankTest extends FlatSpec with Matchers {
 
-  "Bank" should "customer summary" in {
-    val bank: Bank = new Bank
-    val john: Customer = new Customer("John").openAccount(new Account(Account.CHECKING))
-    bank.addCustomer(john)
+  "Bank" should "summary for one customer" in {
+    val bank = new Bank
+    bank.addCustomer(new Customer("John").openAccount(new Account(Account.CHECKING)))
     bank.customerSummary should be("Customer Summary\n - John (1 account)")
+  }
+
+  it should "summary for two customers" in {
+    val bank = new Bank
+    bank.addCustomer(new Customer("John").openAccount(new Account(Account.CHECKING)))
+    bank.addCustomer(new Customer("Bill").openAccount(new Account(Account.CHECKING)))
+    bank.customerSummary should be("Customer Summary\n" +
+      " - John (1 account)\n" +
+      " - Bill (1 account)")
+  }
+
+  it should "summary for one customer with two accounts" in {
+    val bank = new Bank
+    val john = new Customer("John")
+    john.openAccount(new Account(Account.CHECKING))
+    john.openAccount(new Account(Account.SAVINGS))
+    bank.addCustomer(john)
+    bank.customerSummary should be("Customer Summary\n - John (2 accounts)")
   }
 
   it should "total interest paid" in {
