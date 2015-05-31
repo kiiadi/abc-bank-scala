@@ -6,34 +6,27 @@ class BankTest extends FlatSpec with Matchers {
 
   "Bank" should "customer summary" in {
     val bank: Bank = new Bank
-    var john: Customer = new Customer("John").openAccount(new Account(Account.CHECKING))
+    val john: Customer = new Customer("John").openAccount(new Account(Account.CHECKING))
     bank.addCustomer(john)
     bank.customerSummary should be("Customer Summary\n - John (1 account)")
   }
 
-  it should "checking account" in {
-    val bank: Bank = new Bank
-    val checkingAccount: Account = new Account(Account.CHECKING)
-    val bill: Customer = new Customer("Bill").openAccount(checkingAccount)
-    bank.addCustomer(bill)
+  it should "total interest paid" in {
+    val bill = new Customer("Bill")
+    val checkingAccount = new Account(Account.CHECKING)
     checkingAccount.deposit(100.0)
-    bank.totalInterestPaid should be(0.1)
-  }
+    bill.openAccount(checkingAccount)
 
-  it should "savings account" in {
-    val bank: Bank = new Bank
-    val checkingAccount: Account = new Account(Account.SAVINGS)
-    bank.addCustomer(new Customer("Bill").openAccount(checkingAccount))
-    checkingAccount.deposit(1500.0)
-    bank.totalInterestPaid should be(2.0)
-  }
+    val savingsAccount = new Account(Account.SAVINGS)
+    savingsAccount.deposit(1500.0)
+    bill.openAccount(savingsAccount)
 
-  it should "maxi savings account" in {
-    val bank: Bank = new Bank
-    val checkingAccount: Account = new Account(Account.MAXI_SAVINGS)
-    bank.addCustomer(new Customer("Bill").openAccount(checkingAccount))
-    checkingAccount.deposit(3000.0)
-    bank.totalInterestPaid should be(170.0)
-  }
+    val maxiSavingsAccount = new Account(Account.MAXI_SAVINGS)
+    maxiSavingsAccount.deposit(3000.0)
+    bill.openAccount(maxiSavingsAccount)
 
+    val bank = new Bank
+    bank.addCustomer(bill)
+    bank.totalInterestPaid should be(172.1)
+  }
 }
