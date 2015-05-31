@@ -23,21 +23,34 @@ class CustomerTest extends FlatSpec with Matchers {
       "\nTotal In All Accounts $3900.00")
   }
 
-  it should "testOneAccount" in {
+  it should "open one account" in {
     val oscar = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
     oscar.numberOfAccounts should be(1)
   }
 
-  it should "testTwoAccount" in {
+  it should "open two accounts" in {
     val oscar = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
     oscar.openAccount(new Account(Account.CHECKING))
     oscar.numberOfAccounts should be(2)
   }
 
-  it should "testThreeAccounts" in {
+  it should "open three accounts" in {
     val oscar = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
     oscar.openAccount(new Account(Account.CHECKING))
     oscar.openAccount(new Account(Account.MAXI_SAVINGS))
     oscar.numberOfAccounts should be(3)
+  }
+
+  it should "total interest earned" in {
+    val fred = new Customer("Fred")
+    val checkingAccount = new Account(Account.CHECKING)
+    fred.openAccount(checkingAccount)
+    checkingAccount.deposit(100.0)
+
+    val savingsAccount = new Account(Account.SAVINGS)
+    fred.openAccount(savingsAccount)
+    savingsAccount.deposit(1500.0)
+
+    fred.totalInterestEarned should be(2.1)
   }
 }
