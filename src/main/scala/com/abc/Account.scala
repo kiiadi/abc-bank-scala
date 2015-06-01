@@ -2,14 +2,7 @@ package com.abc
 
 import scala.collection.mutable.ListBuffer
 
-object Account {
-  final val CHECKING: Int = 0
-  final val SAVINGS: Int = 1
-  final val MAXI_SAVINGS: Int = 2
-}
-
-class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = ListBuffer()) {
-
+abstract class Account(var name: String, var transactions: ListBuffer[Transaction] = ListBuffer()) {
   def deposit(amount: Double) {
     if (amount <= 0)
       throw new IllegalArgumentException("amount must be greater than zero")
@@ -24,21 +17,27 @@ class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = 
       transactions += Transaction(-amount)
   }
 
-  def interestEarned: Double = {
-    val amount: Double = getBalance
-    accountType match {
-      case Account.SAVINGS =>
-        if (amount <= 1000) amount * 0.001
-        else 1 + (amount - 1000) * 0.002
-      case Account.MAXI_SAVINGS =>
-        if (amount <= 1000) return amount * 0.02
-        if (amount <= 2000) return 20 + (amount - 1000) * 0.05
-        70 + (amount - 2000) * 0.1
-      case _ =>
-        amount * 0.001
-    }
+  def balance: Double = transactions.map(_.amount).sum
+
+  def interestEarned: Double
+}
+
+class Checking extends Account("Checking") {
+  override def interestEarned: Double = balance * 0.001
+}
+
+class Savings extends Account("Savings") {
+  override def interestEarned: Double = {
+    if (balance <= 1000) balance * 0.001
+    else 1 + (balance - 1000) * 0.002
   }
+}
 
-  def getBalance: Double = transactions.map(_.amount).sum
+class MaxiSavings extends Account("Maxi Savings") {
+  override def interestEarned: Double = {
+    if (balance <= 1000) return balance * 0.02
+    if (balance <= 2000) return 20 + (balance - 1000) * 0.05
+    70 + (balance - 2000) * 0.1
 
+  }
 }
