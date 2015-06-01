@@ -1,5 +1,7 @@
 package com.abc
 
+import java.util.Date
+
 import scala.collection.mutable.ListBuffer
 
 abstract class Account(var name: String, var transactions: ListBuffer[Transaction] = ListBuffer()) {
@@ -35,8 +37,13 @@ class Savings extends Account("Savings") {
 
 class MaxiSavings extends Account("Maxi Savings") {
   override def interestEarned: Double = {
-    if (balance <= 1000) return balance * 0.02
-    if (balance <= 2000) return 20 + (balance - 1000) * 0.05
-    70 + (balance - 2000) * 0.1
+    if (anyWithdrawalAfter(DateProvider.now(-10))) balance * 0.001
+    else balance * 0.05
+  }
+
+  def anyWithdrawalAfter(date: Date): Boolean = {
+    transactions
+      .filter(_.transactionDate.after(date))
+      .exists(_.amount < 0)
   }
 }

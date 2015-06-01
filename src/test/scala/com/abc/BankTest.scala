@@ -44,6 +44,6 @@ class BankTest extends FlatSpec with Matchers {
 
     val bank = new Bank
     bank.addCustomer(bill)
-    bank.totalInterestPaid should be(172.1)
+    bank.totalInterestPaid should be(152.1)
   }
 }
