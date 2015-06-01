@@ -38,6 +38,5 @@ class MaxiSavings extends Account("Maxi Savings") {
     if (balance <= 1000) return balance * 0.02
     if (balance <= 2000) return 20 + (balance - 1000) * 0.05
     70 + (balance - 2000) * 0.1
-
   }
 }
