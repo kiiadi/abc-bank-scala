@@ -35,9 +35,9 @@ class Savings extends Account("Savings") {
   }
 }
 
-class MaxiSavings extends Account("Maxi Savings") {
+class MaxiSavings(var dateProvider: DateProvider = new DateProvider) extends Account("Maxi Savings") {
   override def interestEarned: Double = {
-    if (anyWithdrawalAfter(DateProvider.now(-10))) balance * 0.001
+    if (anyWithdrawalAfter(dateProvider.now(-10))) balance * 0.001
     else balance * 0.05
   }
 

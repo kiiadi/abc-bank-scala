@@ -3,7 +3,7 @@ package com.abc
 import java.util.Calendar
 import java.util.Date
 
-object DateProvider {
+class DateProvider {
   def now: Date = Calendar.getInstance.getTime
 
   def now(plusDays: Int): Date = {
