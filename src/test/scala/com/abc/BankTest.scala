@@ -1,39 +1,78 @@
 package com.abc
 
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{WordSpec, Matchers}
+import com.abc.AccountTypes._
 
-class BankTest extends FlatSpec with Matchers {
+class BankTest extends WordSpec with Matchers {
 
-  "Bank" should "customer summary" in {
-    val bank: Bank = new Bank
-    var john: Customer = new Customer("John").openAccount(new Account(Account.CHECKING))
-    bank.addCustomer(john)
-    bank.customerSummary should be("Customer Summary\n - John (1 account)")
+  "Bank" when {
+    "producing customer summaries" should {
+      "for a simple summary" in {
+        val bank = new Bank
+        val john = new Customer("John")
+        john.openAccount(Checking)
+        bank.addCustomer(john)
+        bank.customerSummary should be(
+          """Customer Summary
+            | - John (1 account)""".stripMargin)
+      }
+
+      "for many customers" in {
+        val bank = new Bank
+
+        val john = new Customer("John")
+        john.openAccount(Checking)
+        bank.addCustomer(john)
+
+        val adeline = new Customer("Adeline")
+        adeline.openAccount(Checking)
+        adeline.openAccount(Savings)
+        bank.addCustomer(adeline)
+
+        val betty = new Customer("Betty")
+        betty.openAccount(MaxiSavings)
+        betty.openAccount(Checking)
+        betty.openAccount(Savings)
+        bank.addCustomer(betty)
+
+        bank.customerSummary should be(
+          """Customer Summary
+            | - John (1 account)
+            | - Adeline (2 accounts)
+            | - Betty (3 accounts)""".stripMargin)
+      }
+    }
+
+    "calculating total interest paid" should {
+      "for a checking account" in {
+        val bank = new Bank
+        val bill = new Customer("Bill")
+        val checkingAccount = bill.openAccount(Checking)
+        bank.addCustomer(bill)
+        checkingAccount.deposit(100.0)
+        bank.totalInterestPaid should be(0.1)
+      }
+
+      "for 2 checking accounts, a savings account and a maxi-savings account" in {
+        val bank = new Bank
+
+        val bill = new Customer("Bill")
+        val savingsAccount = bill.openAccount(Savings)
+        val billsCheckingAccount = bill.openAccount(Checking)
+        val maxiSavingsAccount = bill.openAccount(MaxiSavings)
+        bank.addCustomer(bill)
+
+        val carrie = new Customer("Carrie")
+        val carriesCheckingAccount = carrie.openAccount(Checking)
+        bank.addCustomer(carrie)
+
+        carriesCheckingAccount.deposit(1000.0)
+        billsCheckingAccount.deposit(100.0)
+        savingsAccount.deposit(500.0)
+        maxiSavingsAccount.deposit(500.0)
+
+        bank.totalInterestPaid should be(11.6)
+      }
+    }
   }
-
-  it should "checking account" in {
-    val bank: Bank = new Bank
-    val checkingAccount: Account = new Account(Account.CHECKING)
-    val bill: Customer = new Customer("Bill").openAccount(checkingAccount)
-    bank.addCustomer(bill)
-    checkingAccount.deposit(100.0)
-    bank.totalInterestPaid should be(0.1)
-  }
-
-  it should "savings account" in {
-    val bank: Bank = new Bank
-    val checkingAccount: Account = new Account(Account.SAVINGS)
-    bank.addCustomer(new Customer("Bill").openAccount(checkingAccount))
-    checkingAccount.deposit(1500.0)
-    bank.totalInterestPaid should be(2.0)
-  }
-
-  it should "maxi savings account" in {
-    val bank: Bank = new Bank
-    val checkingAccount: Account = new Account(Account.MAXI_SAVINGS)
-    bank.addCustomer(new Customer("Bill").openAccount(checkingAccount))
-    checkingAccount.deposit(3000.0)
-    bank.totalInterestPaid should be(170.0)
-  }
-
 }
