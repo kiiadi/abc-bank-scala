@@ -3,42 +3,24 @@ package com.abc
 import scala.collection.mutable.ListBuffer
 
 class Bank {
-  var customers = new ListBuffer[Customer]
+  private val customers = new ListBuffer[Customer]
 
-  def addCustomer(customer: Customer) {
+  def addCustomer(customer: Customer) : Unit =
     customers += customer
+
+  def customerSummary: String =
+    "Customer Summary\n" + customers.map(customerSummaryRow).mkString("\n")
+
+  private def customerSummaryRow(customer : Customer) =
+    s" - ${customer.name} (${pluralise(customer.numberOfAccounts, "account")})"
+
+  private def pluralise(number: Int, word: String): String = number match {
+    case 1 => s"$number $word"
+    case _ => s"$number ${word}s"
   }
 
-  def customerSummary: String = {
-    var summary: String = "Customer Summary"
-    for (customer <- customers)
-      summary = summary + "\n - " + customer.name + " (" + format(customer.numberOfAccounts, "account") + ")"
-    summary
-  }
-
-  private def format(number: Int, word: String): String = {
-    number + " " + (if (number == 1) word else word + "s")
-  }
-
-  def totalInterestPaid: Double = {
-    var total: Double = 0
-    for (c <- customers) total += c.totalInterestEarned
-    return total
-  }
-
-  def getFirstCustomer: String = {
-    try {
-      customers = null
-      customers(0).name
-    }
-    catch {
-      case e: Exception => {
-        e.printStackTrace
-        return "Error"
-      }
-    }
-  }
-
+  def totalInterestPaid: Double =
+    customers.map(_.totalInterestEarned).sum
 }
 
 
