@@ -16,7 +16,7 @@ class CustomerTest extends FlatSpec with Matchers {
       "\nTotal In All Accounts $3900.00")
   }
 
-  it should "testOneAccount" in {
+  it should "testOneAccount" in {transferBetweenAccounts
     val oscar: Customer = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
     oscar.numberOfAccounts should be(1)
   }
@@ -25,6 +25,17 @@ class CustomerTest extends FlatSpec with Matchers {
     val oscar: Customer = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
     oscar.openAccount(new Account(Account.CHECKING))
     oscar.numberOfAccounts should be(2)
+  }
+  
+  it should "testTransferBetweenAccounts" in {
+    val ckAcct: Account = new Account(Account.CHECKING)
+    val savingsAcct: Account = new Account(Account.SAVINGS)
+    val bob: Customer = new Customer("Bob").openAccount(ckAcct).openAccount(savingsAcct)
+    ckAcct.deposit(500.0)
+    savingsAcct.deposit(100.0)
+    bob.transferBetweenAccounts(ckAcct, savingsAcct, 100.0)
+    ckAcct.sumTransactions() should be (400.0)
+    savingsAcct.sumTransactions() should be (200.0)
   }
 
   ignore should "testThreeAcounts" in {
