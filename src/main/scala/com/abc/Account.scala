@@ -9,7 +9,7 @@ object Account {
   final val MAXI_SAVINGS: Int = 2
 }
 
-class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = ListBuffer()) {
+class Account(val accountType: Int, val transactions: ListBuffer[Transaction] = ListBuffer()) {
 
   def deposit(amount: Double) {
     if (amount <= 0)
