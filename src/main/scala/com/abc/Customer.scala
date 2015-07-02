@@ -27,6 +27,14 @@ class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer(
     statement
   }
 
+  def transferBetweenAccounts(fromAcct: Account, toAcct : Account, amount: Double) = {
+     if (amount <= 0)
+      throw new IllegalArgumentException("amount must be greater than zero")
+     else  {
+        fromAcct.withdraw(amount)
+        toAcct.deposit(amount)
+     }
+  }
   private def statementForAccount(a: Account): String = {
     val accountType = a.accountType match {
       case Account.CHECKING =>

@@ -1,5 +1,6 @@
 package com.abc
 
+import java.util.Date
 import scala.collection.mutable.ListBuffer
 
 object Account {
@@ -8,7 +9,7 @@ object Account {
   final val MAXI_SAVINGS: Int = 2
 }
 
-class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = ListBuffer()) {
+class Account(val accountType: Int, val transactions: ListBuffer[Transaction] = ListBuffer()) {
 
   def deposit(amount: Double) {
     if (amount <= 0)
@@ -31,9 +32,10 @@ class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = 
         if (amount <= 1000) amount * 0.001
         else 1 + (amount - 1000) * 0.002
       case Account.MAXI_SAVINGS =>
-        if (amount <= 1000) return amount * 0.02
-        if (amount <= 2000) return 20 + (amount - 1000) * 0.05
-        70 + (amount - 2000) * 0.1
+        val currDate: Date = DateProvider.now
+        if (transactions.exists(tx => ( (currDate.getTime() - tx.transactionDate.getTime()) / (1000 * 60 * 60 * 24)) <10)) {
+          return amount * 0.001
+        } else return amount * 0.05
       case _ =>
         amount * 0.001
     }
