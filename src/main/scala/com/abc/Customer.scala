@@ -2,53 +2,47 @@ package com.abc
 
 import scala.collection.mutable.ListBuffer
 
-class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer()) {
+case class Customer(name: String) {
+    private val accounts = ListBuffer.empty[Account]
 
-  def openAccount(account: Account): Customer = {
-    accounts += account
-    this
-  }
-
-  def numberOfAccounts: Int = accounts.size
-
-  def totalInterestEarned: Double = accounts.map(_.interestEarned).sum
-
-  /**
-   * This method gets a statement
-   */
-  def getStatement: String = {
-    //JIRA-123 Change by Joe Bloggs 29/7/1988 start
-    var statement: String = null //reset statement to null here
-    //JIRA-123 Change by Joe Bloggs 29/7/1988 end
-    val totalAcrossAllAccounts = accounts.map(_.sumTransactions()).sum
-    statement = f"Statement for $name\n" +
-      accounts.map(statementForAccount).mkString("\n", "\n\n", "\n") +
-      s"\nTotal In All Accounts ${toDollars(totalAcrossAllAccounts)}"
-    statement
-  }
-
-  private def statementForAccount(a: Account): String = {
-    val accountType = a.accountType match {
-      case Account.CHECKING =>
-        "Checking Account\n"
-      case Account.SAVINGS =>
-        "Savings Account\n"
-      case Account.MAXI_SAVINGS =>
-        "Maxi Savings Account\n"
-    }
-    val transactionSummary = a.transactions.map(t => withdrawalOrDepositText(t) + " " + toDollars(t.amount.abs))
-      .mkString("  ", "\n  ", "\n")
-    val totalSummary = s"Total ${toDollars(a.transactions.map(_.amount).sum)}"
-    accountType + transactionSummary + totalSummary
-  }
-
-  private def withdrawalOrDepositText(t: Transaction) =
-    t.amount match {
-      case a if a < 0 => "withdrawal"
-      case a if a > 0 => "deposit"
-      case _ => "N/A"
+    def openAccount(account: Account): Customer = {
+        accounts += account
+        this
     }
 
-  private def toDollars(number: Double): String = f"$$$number%.2f"
+    def numberOfAccounts: Int =
+        accounts.size
+
+    def totalInterestEarned(by: Long): BigDecimal =
+        accounts.map(_.interestEarned(by)).sum
+
+    def getStatement: String = {
+        val totalAcrossAllAccounts = accounts.map(_.sumTransactions).sum
+        val statementBodies = accounts.map(statementForAccount).mkString("\n", "\n\n", "\n")
+        s"Statement for $name\n$statementBodies\nTotal In All Accounts ${toDollars(totalAcrossAllAccounts)}"
+    }
+
+    private def statementForAccount(account: Account): String = {
+        def totalSummary = s"Total ${toDollars(account.sumTransactions)}"
+
+        def transactionSummary(transactions: List[Transaction]): String =
+            transactions.map {
+                case Transaction.Deposit(amount, _) => s"deposit ${toDollars(amount)}"
+                case Transaction.Withdrawal(amount, _) => s"withdrawal ${toDollars(amount)}"
+            }.mkString("  ", "\n  ", "\n")
+
+        account match {
+            case Checking() =>
+                s"Checking Account\n${transactionSummary(account.getTransactions)}$totalSummary"
+            case Savings() =>
+                s"Savings Account\n${transactionSummary(account.getTransactions)}$totalSummary"
+            case MaxiSavings() =>
+                s"Maxi Savings Account\n${transactionSummary(account.getTransactions)}$totalSummary"
+        }
+    }
+
+    private def toDollars(amount: BigDecimal): String = {
+        val rounded = amount.setScale(2, BigDecimal.RoundingMode.HALF_EVEN)
+        s"$$$rounded"
+    }
 }
-

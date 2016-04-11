@@ -3,42 +3,76 @@ package com.abc
 import scala.collection.mutable.ListBuffer
 
 object Account {
-  final val CHECKING: Int = 0
-  final val SAVINGS: Int = 1
-  final val MAXI_SAVINGS: Int = 2
+    case class Acc(balance: BigDecimal, interest: BigDecimal, prevTime: Long, prevWithdrawalTime: Long)
+
+    val day = 1000L * 60L * 60L * 24L
 }
 
-class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = ListBuffer()) {
+abstract class Account {
+    protected val transactions = ListBuffer.empty[Transaction]
 
-  def deposit(amount: Double) {
-    if (amount <= 0)
-      throw new IllegalArgumentException("amount must be greater than zero")
-    else
-      transactions += Transaction(amount)
-  }
+    def getTransactions: List[Transaction] = transactions.toList
 
-  def withdraw(amount: Double) {
-    if (amount <= 0)
-      throw new IllegalArgumentException("amount must be greater than zero")
-    else
-      transactions += Transaction(-amount)
-  }
-
-  def interestEarned: Double = {
-    val amount: Double = sumTransactions()
-    accountType match {
-      case Account.SAVINGS =>
-        if (amount <= 1000) amount * 0.001
-        else 1 + (amount - 1000) * 0.002
-      case Account.MAXI_SAVINGS =>
-        if (amount <= 1000) return amount * 0.02
-        if (amount <= 2000) return 20 + (amount - 1000) * 0.05
-        70 + (amount - 2000) * 0.1
-      case _ =>
-        amount * 0.001
+    def deposit(amount: String, time: Long) = {
+        transactions += Transaction.deposit(amount, time)
+        this
     }
-  }
 
-  def sumTransactions(checkAllTransactions: Boolean = true): Double = transactions.map(_.amount).sum
+    def withdraw(amount: String, time: Long) = {
+        val w = Transaction.withdrawal(amount, time)
+        if (sumTransactions >= w.amount) {
+            transactions += w
+            this
+        } else throw new IllegalArgumentException("amount must be greater than balance")
+    }
 
+    protected def chronologie: List[Transaction] =
+        getTransactions.sortBy {
+            case Transaction.Deposit(_, time) => time
+            case Transaction.Withdrawal(_, time) => time
+        }
+
+    protected def rollup: Account.Acc =
+        chronologie.foldLeft(Account.Acc(0, 0, 0, 0)) { (acc, trans) =>
+            val (balance, time, wtime) = trans match {
+                case Transaction.Deposit(amt, t) => (acc.balance + amt, t, acc.prevWithdrawalTime)
+                case Transaction.Withdrawal(amt, t) => (acc.balance - amt, t, t)
+            }
+            val days = (time - acc.prevTime) / Account.day
+            val daysSinceWithdrawal = (time - acc.prevWithdrawalTime) / Account.day
+            Account.Acc(balance, acc.interest + accrue(days, acc.balance, daysSinceWithdrawal), time, wtime)
+        }
+
+    def sumTransactions: BigDecimal = rollup.balance
+
+    def interestEarned(by: Long): BigDecimal =
+        if (by < rollup.prevTime) throw new IllegalArgumentException("by-time must be after last transaction")
+        else {
+            val days = (by - rollup.prevTime) / Account.day
+            val daysSinceWithdrawal = (by - rollup.prevWithdrawalTime) / Account.day
+            rollup.interest + accrue(days, rollup.balance, daysSinceWithdrawal)
+        }
+
+    protected def accrue(days: Long, balance: BigDecimal, daysSinceWithdrawal: Long): BigDecimal
+}
+
+case class Checking() extends Account {
+    protected def accrue(days: Long, balance: BigDecimal, daysSinceWithdrawal: Long): BigDecimal =
+        if (balance > 0) balance * 0.001 / 365 * days
+        else 0
+}
+
+case class Savings() extends Account {
+    protected def accrue(days: Long, balance: BigDecimal, daysSinceWithdrawal: Long): BigDecimal =
+        if (balance > 0 && balance <= 1000) balance * 0.001 / 365 * days
+        else if (balance > 1000) BigDecimal(1) / 365 * days + (balance - 1000) * 0.002 / 365 * days
+        else 0
+}
+
+case class MaxiSavings() extends Account {
+    protected def accrue(days: Long, balance: BigDecimal, daysSinceWithdrawal: Long): BigDecimal =
+        if (balance > 0 && daysSinceWithdrawal < 10) balance * 0.001 / 365 * days
+        else if (balance > 0 && days < daysSinceWithdrawal - 10) balance * 0.05 / 365 * days
+        else if (balance > 0) balance * 0.05 / 365 * (daysSinceWithdrawal - 10) + balance * 0.001 / 365 * (days - daysSinceWithdrawal + 10)
+        else 0
 }
