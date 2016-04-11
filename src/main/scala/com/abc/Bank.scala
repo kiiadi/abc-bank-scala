@@ -3,42 +3,19 @@ package com.abc
 import scala.collection.mutable.ListBuffer
 
 class Bank {
-  var customers = new ListBuffer[Customer]
+    private val customers = ListBuffer.empty[Customer]
 
-  def addCustomer(customer: Customer) {
-    customers += customer
-  }
-
-  def customerSummary: String = {
-    var summary: String = "Customer Summary"
-    for (customer <- customers)
-      summary = summary + "\n - " + customer.name + " (" + format(customer.numberOfAccounts, "account") + ")"
-    summary
-  }
-
-  private def format(number: Int, word: String): String = {
-    number + " " + (if (number == 1) word else word + "s")
-  }
-
-  def totalInterestPaid: Double = {
-    var total: Double = 0
-    for (c <- customers) total += c.totalInterestEarned
-    return total
-  }
-
-  def getFirstCustomer: String = {
-    try {
-      customers = null
-      customers(0).name
+    def addCustomer(name: String): Customer = {
+        val c = Customer(name)
+        customers += c
+        c
     }
-    catch {
-      case e: Exception => {
-        e.printStackTrace
-        return "Error"
-      }
-    }
-  }
 
+    def customerSummary: String =
+        customers
+            .map(c => s"${c.name} (${c.numberOfAccounts} account${if (c.numberOfAccounts == 1) "" else "s"})")
+            .mkString("Customer Summary\n - ", "\n - ", "")
+
+    def totalInterestPaid(by: Long): BigDecimal =
+        customers.map(_.totalInterestEarned(by)).sum.setScale(2, BigDecimal.RoundingMode.HALF_EVEN)
 }
-
-
