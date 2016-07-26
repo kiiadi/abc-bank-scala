@@ -2,9 +2,11 @@ package com.abc
 
 import scala.collection.mutable.ListBuffer
 
-class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer()) {
+import com.abc.AccountType._
 
-  def openAccount(account: Account): Customer = {
+class Customer(val name: String, var accounts: ListBuffer[MyAccount] = ListBuffer()) {
+
+  def openAccount(account: MyAccount): Customer = {
     accounts += account
     this
   }
@@ -27,13 +29,13 @@ class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer(
     statement
   }
 
-  private def statementForAccount(a: Account): String = {
+  private def statementForAccount(a: MyAccount): String = {
     val accountType = a.accountType match {
-      case Account.CHECKING =>
+      case CHECKING =>
         "Checking Account\n"
-      case Account.SAVINGS =>
+      case SAVINGS =>
         "Savings Account\n"
-      case Account.MAXI_SAVINGS =>
+      case MAXI_SAVINGS =>
         "Maxi Savings Account\n"
     }
     val transactionSummary = a.transactions.map(t => withdrawalOrDepositText(t) + " " + toDollars(t.amount.abs))
@@ -42,7 +44,7 @@ class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer(
     accountType + transactionSummary + totalSummary
   }
 
-  private def withdrawalOrDepositText(t: Transaction) =
+  private def withdrawalOrDepositText(t: MyTransaction) =
     t.amount match {
       case a if a < 0 => "withdrawal"
       case a if a > 0 => "deposit"
