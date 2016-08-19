@@ -50,5 +50,22 @@ class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer(
     }
 
   private def toDollars(number: Double): String = f"$$$number%.2f"
-}
 
+
+  /**
+    * @param from accountID
+    * @param to accountID
+    * @param amount  amount Transaction
+    * @return successful or not
+    */
+  @throws[Exception]
+  def transfer(from: Int, to: Int, amount: Double): Boolean = {
+    if (accounts(from).sumTransactions() >= amount) {
+      accounts(from).withdraw(amount)
+      accounts(to).deposit(amount)
+      true
+    } else
+      false
+
+  }
+}
