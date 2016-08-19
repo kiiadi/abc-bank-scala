@@ -1,6 +1,7 @@
 package com.abc
 
 import org.scalatest.{Matchers, FlatSpec}
+import com.abc.AccountType._
 
 class BankTest extends FlatSpec with Matchers {
 

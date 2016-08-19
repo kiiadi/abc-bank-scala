@@ -13,9 +13,8 @@ class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer(
 
   def totalInterestEarned: Double = accounts.map(_.interestEarned).sum
 
-  /**
-   * This method gets a statement
-   */
+  def transfer(amount:Double, from:Account, to:Account)
+  }
   def getStatement: String = {
     //JIRA-123 Change by Joe Bloggs 29/7/1988 start
     var statement: String = null //reset statement to null here

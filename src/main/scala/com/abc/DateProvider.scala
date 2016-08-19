@@ -4,8 +4,8 @@ import java.util.Calendar
 import java.util.Date
 
 object DateProvider {
-  def getInstance: DateProvider = {
-    if (instance == null) instance = new DateProvider
+  def getInstance: DateProvider = new DateProvider{
+    override def now: Date = Calendar.getInstance.getTime
     instance
   }
 
