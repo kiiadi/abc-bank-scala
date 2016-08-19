@@ -3,7 +3,7 @@ package com.abc
 import scala.collection.mutable.ListBuffer
 
 class Bank {
-  var customers = new ListBuffer[Customer]
+  private val customers = new ListBuffer.empty[Customer]
 
   def addCustomer(customer: Customer) {
     customers += customer
