@@ -5,8 +5,10 @@ import scala.collection.mutable.ListBuffer
 class Bank {
   private val customers = new ListBuffer.empty[Customer]
 
-  def addCustomer(customer: Customer) {
-    customers += customer
+  def addCustomer(name: String): Customer = {
+    val a = Customer(name)
+    customers += a
+    a
   }
 
   def customerSummary: String = {
