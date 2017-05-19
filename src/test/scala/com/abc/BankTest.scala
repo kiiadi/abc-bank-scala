@@ -4,36 +4,50 @@ import org.scalatest.{Matchers, FlatSpec}
 
 class BankTest extends FlatSpec with Matchers {
 
-  "Bank" should "customer summary" in {
+  "Bank" should "have 2 customer after adding the first customer" in {
     val bank: Bank = new Bank
-    var john: Customer = new Customer("John").openAccount(new Account(Account.CHECKING))
+    val john: Customer = new Customer("John")
+    val bill: Customer = new Customer("Bill")
+    val accountJohn:Account = john.openAccount(Account.AccountType.CHECKING)
+    val accountBill:Account = bill.openAccount(Account.AccountType.SAVING)
     bank.addCustomer(john)
-    bank.customerSummary should be("Customer Summary\n - John (1 account)")
+    bank.addCustomer(bill)
+    bank.customers.size should be (2)
   }
 
-  it should "checking account" in {
+  "Bank totoal Interest Paid" should "be the interest for the checking account" in {
     val bank: Bank = new Bank
-    val checkingAccount: Account = new Account(Account.CHECKING)
-    val bill: Customer = new Customer("Bill").openAccount(checkingAccount)
-    bank.addCustomer(bill)
-    checkingAccount.deposit(100.0)
+    val john: Customer = new Customer("John")
+    val account:Account = john.openAccount(Account.AccountType.CHECKING)
+    bank.addCustomer(john)
+    account.deposit(Some(100.0))
     bank.totalInterestPaid should be(0.1)
   }
 
-  it should "savings account" in {
+  "Bank totoal Interest Paid" should "be the interest for the checking account and saving acccount" in {
     val bank: Bank = new Bank
-    val checkingAccount: Account = new Account(Account.SAVINGS)
-    bank.addCustomer(new Customer("Bill").openAccount(checkingAccount))
-    checkingAccount.deposit(1500.0)
-    bank.totalInterestPaid should be(2.0)
+    val john: Customer = new Customer("John")
+    val checkAccount:Account = john.openAccount(Account.AccountType.CHECKING)
+    val savingAccount:Account = john.openAccount(Account.AccountType.SAVING)
+    bank.addCustomer(john)
+    checkAccount.deposit(Some(100.0))
+    savingAccount.deposit(Some(1100.0))
+    bank.totalInterestPaid should be(1.3)
   }
 
-  it should "maxi savings account" in {
+  "Bank totoal Interest Paid" should "be the interest for the all the customers and all the checking accounts" in {
     val bank: Bank = new Bank
-    val checkingAccount: Account = new Account(Account.MAXI_SAVINGS)
-    bank.addCustomer(new Customer("Bill").openAccount(checkingAccount))
-    checkingAccount.deposit(3000.0)
-    bank.totalInterestPaid should be(170.0)
+    val john: Customer = new Customer("John")
+    val bill: Customer = new Customer("Bill")
+    val checkAccountJohn:Account = john.openAccount(Account.AccountType.CHECKING)
+    val savingAccountJohn:Account = john.openAccount(Account.AccountType.SAVING)
+    val maxaAccountBill: Account = bill.openAccount(Account.AccountType.MAX_SAVING)
+    bank.addCustomer(john)
+    bank.addCustomer(bill)
+    checkAccountJohn.deposit(Some(100.0))
+    savingAccountJohn.deposit(Some(1100.0))
+    maxaAccountBill.deposit(Some(3100))
+    bank.totalInterestPaid should be(18.8)
   }
 
 }

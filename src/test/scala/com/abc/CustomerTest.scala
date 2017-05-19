@@ -3,33 +3,48 @@ package com.abc
 import org.scalatest.{Matchers, FlatSpec}
 
 class CustomerTest extends FlatSpec with Matchers {
-  "Customer" should "statement" in {
-    val checkingAccount: Account = new Account(Account.CHECKING)
-    val savingsAccount: Account = new Account(Account.SAVINGS)
-    val henry: Customer = new Customer("Henry").openAccount(checkingAccount).openAccount(savingsAccount)
-    checkingAccount.deposit(100.0)
-    savingsAccount.deposit(4000.0)
-    savingsAccount.withdraw(200.0)
-    henry.getStatement should be("Statement for Henry\n" +
-      "\nChecking Account\n  deposit $100.00\nTotal $100.00\n" +
-      "\nSavings Account\n  deposit $4000.00\n  withdrawal $200.00\nTotal $3800.00\n" +
-      "\nTotal In All Accounts $3900.00")
+  "Customer" should " have 2 acounts after openning account statement" in {
+    val john: Customer = new Customer("John")
+    val checkingAccount: Account =  john.openAccount(Account.AccountType.SAVING)
+    val savingsAccount: Account = john.openAccount(Account.AccountType.CHECKING)
+    john.accounts.size should be(2)
   }
 
-  it should "testOneAccount" in {
-    val oscar: Customer = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
-    oscar.numberOfAccounts should be(1)
+  "Customer" should " not open the same account more then once" in {
+    val john: Customer = new Customer("John")
+    val checkingAccount: Account =  john.openAccount(Account.AccountType.SAVING)
+    intercept[RuntimeException]{
+      val savingsAccount: Account = john.openAccount(Account.AccountType.SAVING)
+    }
+    john.accounts.size should be (1)
   }
 
-  it should "testTwoAccount" in {
-    val oscar: Customer = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
-    oscar.openAccount(new Account(Account.CHECKING))
-    oscar.numberOfAccounts should be(2)
+  "Total balance" should " be ALL the deposit minus the widraws from the account" in {
+    val oscar: Customer = new Customer("Oscar")
+    val savingAccount: Account = oscar.openAccount(Account.AccountType.SAVING)
+    savingAccount.deposit(Some(100.1))
+    savingAccount.deposit(Some(200))
+    savingAccount.withdraw(Some(250))
+    savingAccount.getBalance should be(50.1)
   }
 
-  ignore should "testThreeAcounts" in {
-    val oscar: Customer = new Customer("Oscar").openAccount(new Account(Account.SAVINGS))
-    oscar.openAccount(new Account(Account.CHECKING))
-    oscar.numberOfAccounts should be(3)
+  "Customer" should " not withdraw money more than account balances" in {
+    val john: Customer = new Customer("John")
+    val checkingAccount: Account =  john.openAccount(Account.AccountType.SAVING)
+    checkingAccount.deposit(Some(100.01))
+    intercept[IllegalArgumentException]{
+      checkingAccount.withdraw(Some(200.01))
+    }
+    checkingAccount.getBalance should be (100.01)
   }
+
+  "Total transaction" should " be all the transactions for the accounts" in {
+    val oscar: Customer = new Customer("Oscar")
+    val savingAccount: Account = oscar.openAccount(Account.AccountType.SAVING)
+    savingAccount.deposit(Some(100.1))
+    savingAccount.deposit(Some(200))
+    savingAccount.withdraw(Some(250))
+    savingAccount.getTransactions.size should be (3)
+  }
+
 }
