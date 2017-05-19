@@ -1,6 +1,22 @@
 package com.abc
 
-case class Transaction(var amount: Double) {
-  val transactionDate = DateProvider.getInstance.now
+import java.util.Calendar
+
+import com.abc.Account.AccountType.Value
+
+case class Transaction(val amount: BigDecimal,transactionType: Transaction.TransactionType.Value ) {
+  val transactionDate =  Calendar.getInstance.getTime
+
+  override def toString: String = {
+    transactionType + " " +  amount
+  }
+
+}
+
+object Transaction{
+  object TransactionType extends Enumeration{
+    type accountType = Value
+    val DEPOSIT, WITHAW = Value
+  }
 }
 

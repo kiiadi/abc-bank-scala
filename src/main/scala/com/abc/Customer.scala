@@ -2,53 +2,49 @@ package com.abc
 
 import scala.collection.mutable.ListBuffer
 
-class Customer(val name: String, var accounts: ListBuffer[Account] = ListBuffer()) {
+class Customer(val name: String) {
 
-  def openAccount(account: Account): Customer = {
+  var accounts: ListBuffer[Account] = ListBuffer()
+  def openAccount(accountType: Account.AccountType.Value): Account = {
+    if (accounts.exists( x => x.accountType == accountType)) {
+      throw new RuntimeException(s"account type $accountType already exist")
+    }
+    val account = Account(accountType, name)
     accounts += account
-    this
+    account
   }
 
   def numberOfAccounts: Int = accounts.size
 
-  def totalInterestEarned: Double = accounts.map(_.interestEarned).sum
+  def totalInterestEarned: BigDecimal = accounts.map(Account.interestEarned(_)).sum
 
   /**
    * This method gets a statement
    */
   def getStatement: String = {
     //JIRA-123 Change by Joe Bloggs 29/7/1988 start
-    var statement: String = null //reset statement to null here
+    var statement: String = "" //reset statement to null here
     //JIRA-123 Change by Joe Bloggs 29/7/1988 end
-    val totalAcrossAllAccounts = accounts.map(_.sumTransactions()).sum
+    val totalAcrossAllAccounts = accounts.foldLeft(BigDecimal(0)){(sum, account) => sum + account.getBalance}
     statement = f"Statement for $name\n" +
-      accounts.map(statementForAccount).mkString("\n", "\n\n", "\n") +
+      accounts.map(statementForAccount(_)).mkString("\n", "\n\n", "\n") +
       s"\nTotal In All Accounts ${toDollars(totalAcrossAllAccounts)}"
     statement
   }
 
   private def statementForAccount(a: Account): String = {
-    val accountType = a.accountType match {
-      case Account.CHECKING =>
-        "Checking Account\n"
-      case Account.SAVINGS =>
-        "Savings Account\n"
-      case Account.MAXI_SAVINGS =>
-        "Maxi Savings Account\n"
-    }
-    val transactionSummary = a.transactions.map(t => withdrawalOrDepositText(t) + " " + toDollars(t.amount.abs))
-      .mkString("  ", "\n  ", "\n")
-    val totalSummary = s"Total ${toDollars(a.transactions.map(_.amount).sum)}"
-    accountType + transactionSummary + totalSummary
+    println("in statementforaccount")
+    a.toString
   }
 
-  private def withdrawalOrDepositText(t: Transaction) =
-    t.amount match {
-      case a if a < 0 => "withdrawal"
-      case a if a > 0 => "deposit"
-      case _ => "N/A"
-    }
+  override def toString: String = {
+    name + " (" +  format(accounts.size, "account") + ")"
+  }
 
-  private def toDollars(number: Double): String = f"$$$number%.2f"
+  private def toDollars(number:BigDecimal): String = f"$$$number%.2f"
+
+  private def format(number: Int, word: String): String = {
+    number + " " + (if (number == 1) word else word + "s")
+  }
 }
 

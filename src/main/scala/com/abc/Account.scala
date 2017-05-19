@@ -1,44 +1,78 @@
 package com.abc
-
 import scala.collection.mutable.ListBuffer
 
 object Account {
-  final val CHECKING: Int = 0
-  final val SAVINGS: Int = 1
-  final val MAXI_SAVINGS: Int = 2
+  val CHECKING_INT_RATE = 0.001
+  val SAVING_LOWER_INT_RATE = 0.001
+  val SAVING_UPPER_INT_RATE = 0.002
+  val SAVING_BENCH_MARK = 1000
+  val MAX_SAVING_LOWER_INT_RATE = 0.002
+  val MAX_SAVING_MID_INT_RATE = 0.005
+  val MAX_SAVING_UPPER_INT_RATE = 0.005
+  val MAX_SAVING_MID_BENCH_MARK = 1000
+  val MAX_SAVING_HIGH_BENCH_MARK = 2000
+
+  object AccountType extends Enumeration{
+    type accountType = Value
+    val CHECKING, SAVING, MAX_SAVING = Value
+  }
+
+  def apply (accountType: AccountType.Value, accoutHolder: String) = new Account(accountType,accoutHolder)
+
+  def interestEarned(account: Account): BigDecimal = {
+    val amount: BigDecimal = account.transactions.map(_.amount).sum
+    account.accountType match {
+      case AccountType.SAVING =>
+        if (amount <= SAVING_BENCH_MARK) amount * SAVING_LOWER_INT_RATE
+        else SAVING_BENCH_MARK * SAVING_LOWER_INT_RATE + (amount - SAVING_BENCH_MARK) * SAVING_UPPER_INT_RATE
+      case AccountType.MAX_SAVING =>
+        if (amount <= MAX_SAVING_MID_BENCH_MARK)  amount * MAX_SAVING_LOWER_INT_RATE
+        if (amount <= MAX_SAVING_HIGH_BENCH_MARK)  MAX_SAVING_MID_BENCH_MARK * MAX_SAVING_LOWER_INT_RATE + (amount - MAX_SAVING_MID_BENCH_MARK) * MAX_SAVING_MID_INT_RATE
+        MAX_SAVING_MID_BENCH_MARK * MAX_SAVING_LOWER_INT_RATE + MAX_SAVING_HIGH_BENCH_MARK * MAX_SAVING_MID_INT_RATE + (amount - MAX_SAVING_HIGH_BENCH_MARK) * MAX_SAVING_UPPER_INT_RATE
+      case _ =>
+        amount * CHECKING_INT_RATE
+    }
+  }
 }
 
-class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = ListBuffer()) {
 
-  def deposit(amount: Double) {
-    if (amount <= 0)
-      throw new IllegalArgumentException("amount must be greater than zero")
-    else
-      transactions += Transaction(amount)
-  }
+class Account(val accountType: Account.AccountType.Value, val accoutHolder: String) {
 
-  def withdraw(amount: Double) {
-    if (amount <= 0)
-      throw new IllegalArgumentException("amount must be greater than zero")
-    else
-      transactions += Transaction(-amount)
-  }
+  private val transactions = ListBuffer[Transaction]()
 
-  def interestEarned: Double = {
-    val amount: Double = sumTransactions()
-    accountType match {
-      case Account.SAVINGS =>
-        if (amount <= 1000) amount * 0.001
-        else 1 + (amount - 1000) * 0.002
-      case Account.MAXI_SAVINGS =>
-        if (amount <= 1000) return amount * 0.02
-        if (amount <= 2000) return 20 + (amount - 1000) * 0.05
-        70 + (amount - 2000) * 0.1
-      case _ =>
-        amount * 0.001
+  private var balance: BigDecimal = BigDecimal(0.00)
+
+  def deposit(amount: Option[BigDecimal]) = this.synchronized{
+    if (amount.get > 0 ){
+      balance = balance + amount.get
+      transactions += Transaction(amount.get, Transaction.TransactionType.DEPOSIT)
+    }else{
+      throw new IllegalArgumentException("amount must be greater than 0")
     }
   }
 
-  def sumTransactions(checkAllTransactions: Boolean = true): Double = transactions.map(_.amount).sum
+  def withdraw(amount: Option[BigDecimal]) = this.synchronized{
+    if (amount.get > 0 && amount.get <= balance){
+      balance = balance - amount.get
+      transactions += Transaction(amount.get, Transaction.TransactionType.WITHAW)
+    }else if (amount.get > balance) {
+      throw new IllegalArgumentException("amount must be less than account balance")
+    }else{
+      throw new IllegalArgumentException("amount must be greater than 0")
+    }
+  }
+
+  def getBalance = this.balance
+
+  def getTransactions = this.transactions
+
+  override def toString: String = {
+    val accountSummary = this.accountType + "" + "\n"
+    val transactionsSummary  = transactions.foldLeft(""){(sum, transaction)=> sum + transaction.toString + "\n"}
+    val total = "Total: " + balance
+    accountSummary + transactionsSummary + total
+  }
+
+  def sumTransactions(checkAllTransactions: Boolean = true): BigDecimal = transactions.map(_.amount).sum
 
 }
