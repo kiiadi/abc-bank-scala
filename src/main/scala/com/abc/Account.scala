@@ -1,44 +1,100 @@
 package com.abc
 
+
 import scala.collection.mutable.ListBuffer
 
 object Account {
-  final val CHECKING: Int = 0
-  final val SAVINGS: Int = 1
-  final val MAXI_SAVINGS: Int = 2
+  val CheckingInterest = 0.001
+  val SavigsInterest = 0.002
+  val MaxiRate1 = 0.02
+  val MaxiRate2 = 0.05
+  val MaxiRate3 = 0.10
+  val checkingThreshold = 1000
+  val MaxiThreshold1 = 1000
+  val MaxiThreshold2 = 2000
+  val MaxiSavingsWithdrawlDays = 10
+
+  def negativeAmountException(amount: Double) = new IllegalArgumentException(s"Amount ${amount} must be greater than zero")
+  def exceedsBalanceExeption(amount: Double ) = new IllegalArgumentException(s"Amount ${amount} exceeds balance")
 }
 
-class Account(val accountType: Int, var transactions: ListBuffer[Transaction] = ListBuffer()) {
+sealed trait Account {
 
-  def deposit(amount: Double) {
-    if (amount <= 0)
-      throw new IllegalArgumentException("amount must be greater than zero")
-    else
+  val transactions: ListBuffer[Transaction] = ListBuffer[Transaction]()
+  val accountLock = new Object()
+
+  def deposit(amount: Double): Unit = {
+    accountLock.synchronized {
+      Condition.check((amount <= 0), Account.negativeAmountException(amount))
       transactions += Transaction(amount)
-  }
-
-  def withdraw(amount: Double) {
-    if (amount <= 0)
-      throw new IllegalArgumentException("amount must be greater than zero")
-    else
-      transactions += Transaction(-amount)
-  }
-
-  def interestEarned: Double = {
-    val amount: Double = sumTransactions()
-    accountType match {
-      case Account.SAVINGS =>
-        if (amount <= 1000) amount * 0.001
-        else 1 + (amount - 1000) * 0.002
-      case Account.MAXI_SAVINGS =>
-        if (amount <= 1000) return amount * 0.02
-        if (amount <= 2000) return 20 + (amount - 1000) * 0.05
-        70 + (amount - 2000) * 0.1
-      case _ =>
-        amount * 0.001
     }
   }
 
-  def sumTransactions(checkAllTransactions: Boolean = true): Double = transactions.map(_.amount).sum
+  def withdraw(amount: Double) {
+    accountLock.synchronized {
+      Condition.check((amount <= 0), Account.negativeAmountException(amount))
+      transactions += Transaction(-amount)
+    }
+  }
 
+  def statementForAccount: String = {
+    val transactionSummary = transactions.map(t => t.withdrawalOrDepositText + " " + FormatUtils.toDollars(t.amount.abs))
+      .mkString("  ", "\n  ", "\n")
+    val totalSummary = s"Total ${FormatUtils.toDollars(transactions.map(_.amount).sum)}"
+    statementType + "\n" + transactionSummary + totalSummary
+  }
+
+  def sumTransactions: Double = transactions.map(_.amount).sum
+  def interestEarned: Double = interestEarned(sumTransactions)
+
+
+   protected[this] def interestEarned(amount: Double): Double = {
+    accountLock.synchronized {
+      Condition.check((amount <= 0), Account.negativeAmountException(amount))
+      amount * Account.CheckingInterest
+    }
+  }
+  def statementType: String
+
+}
+
+case class CheckingAccount() extends Account {
+
+  override def statementType: String = "Checking Account"
+}
+
+case class SavingsAccount() extends Account {
+  override protected[this] def interestEarned(amount: Double): Double = {
+    accountLock.synchronized {
+      Condition.check((amount <= 0), Account.negativeAmountException(amount))
+      if (amount < Account.checkingThreshold) super.interestEarned(amount)
+      else {
+        val checkingInterest = super.interestEarned(Account.checkingThreshold)
+        val savingsInterest = (amount- Account.checkingThreshold) * Account.SavigsInterest
+        checkingInterest + savingsInterest
+      }
+    }
+  }
+  override def statementType: String = "Savings Account"
+}
+
+
+case class MaxiSavingsAccount() extends Account {
+  def daysSinceLastWithdrawl: Int = 10
+
+  override protected[this] def interestEarned(amount: Double): Double = {
+    accountLock.synchronized {
+      Condition.check((amount <= 0), Account.negativeAmountException(amount))
+      if (amount <= Account.MaxiThreshold1) amount * Account.MaxiRate1
+      else if (amount <= Account.MaxiThreshold2) (Account.MaxiThreshold1 * Account.MaxiRate1) + (amount - Account.MaxiThreshold1) * Account.MaxiRate2
+      else {
+        val interestTier1 = Account.MaxiThreshold1 * Account.MaxiRate1
+        val interestTier2 = (Account.MaxiThreshold2 - Account.MaxiThreshold1) * Account.MaxiRate2
+        val interestTier3 = (amount - Account.MaxiThreshold2) * Account.MaxiRate3
+        interestTier1 + interestTier2 + interestTier3
+      }
+    }
+  }
+
+  override def statementType: String = "MaxiSavings Account"
 }
