@@ -8,5 +8,7 @@ object FormatUtils {
     number + " " + (if (number == 1) word else word + "s")
   }
 
+  val getNewId = java.util.UUID.randomUUID.toString
+
 }
 

@@ -16,7 +16,6 @@ object Account {
   val MaxiThreshold2 = 2000
   val MaxiSavingsWithdrawlDays = 10
 
-  val getNewId = java.util.UUID.randomUUID.toString
   def negativeAmountException(amount: Double) = new IllegalArgumentException(s"Amount ${amount} must be greater than zero")
   def exceedsBalanceExeption(amount: Double ) = new IllegalArgumentException(s"Amount ${amount} exceeds balance")
 }
@@ -27,8 +26,7 @@ object AccountStatementType extends Enumeration {
 }
 sealed trait Account {
 
-
-  val accountId = Account.getNewId
+  val accountId = FormatUtils.getNewId
   val transactions: ListBuffer[Transaction] = ListBuffer[Transaction]()
   private var balance: Double = 0.0
 
@@ -68,7 +66,6 @@ sealed trait Account {
     this
   }
 
-
   def statementForAccount: String = {
     val transactionSummary = transactions.map(t => {
       val tranDollars = FormatUtils.toDollars(t.amount.abs)
@@ -80,19 +77,21 @@ sealed trait Account {
     statementType + "\n" + transactionSummary + totalSummary
   }
 
-
+  def interestEarned: Double = interestEarned(getBalance)
   def sumTransactions: Double = accountId.synchronized { transactions.map(_.amount).sum }
-  def recomputeBalance: Unit = {
+  protected def recomputeBalance: Unit = {
     accountId.synchronized { balance = sumTransactions }
   }
-  def interestEarned: Double = interestEarned(getBalance)
 
+  /**
+    * Virtural Method, defaults to Checking Account Rate
+    */
+  protected[this] def interestEarned(amount: Double): Double = {
+    Condition.check((amount <= 0), Account.negativeAmountException(amount))
+    amount * Account.CheckingInterest
+  }
 
-   protected[this] def interestEarned(amount: Double): Double = {
-      Condition.check((amount <= 0), Account.negativeAmountException(amount))
-      amount * Account.CheckingInterest
-   }
-
+  // Pure Virtual implemented by Acccount Type
   def statementType: AccountStatementType.statementType
 
 }
@@ -103,6 +102,7 @@ case class CheckingAccount() extends Account {
 }
 
 case class SavingsAccount() extends Account {
+
   override protected[this] def interestEarned(amount: Double): Double = {
     Condition.check((amount <= 0), Account.negativeAmountException(amount))
     if (amount < Account.checkingThreshold) super.interestEarned(amount)
@@ -117,7 +117,6 @@ case class SavingsAccount() extends Account {
 
 
 case class MaxiSavingsAccount() extends Account {
-  def daysSinceLastWithdrawl: Int = 10
 
   override protected[this] def interestEarned(amount: Double): Double = {
     accountId.synchronized {
