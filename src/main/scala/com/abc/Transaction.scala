@@ -2,13 +2,24 @@ package com.abc
 
 import java.util.Date
 
-case class Transaction(val amount: Double, val transactionDate: Date = DateUtils.now ) {
-   def withdrawalOrDepositText: String =
-    amount match {
-      case a if a < 0 => "withdrawal"
-      case a if a > 0 => "deposit"
-      case _ => "N/A"
-    }
-
+sealed trait Transaction {
+  val amount: Double = 0
+  val transactionDate: Date = DateUtils.now
+  def transactionType: String
 }
+
+case class Withdrawl(override val amount: Double) extends Transaction  {
+  override def transactionType = "withdrawal"
+}
+case class Deposit(override val amount: Double) extends Transaction  {
+  override def transactionType = "deposit"
+}
+case class TransferFrom(override val amount: Double, fromAccountId: String, toAccountId: String) extends Transaction  {
+  override def transactionType = "transferFrom"
+}
+case class TransferTo(override val amount: Double, fromAccountId: String, toAccountId: String) extends Transaction  {
+  override def transactionType = "transferTo"
+}
+
+
 
