@@ -6,9 +6,26 @@ class BankTest extends FlatSpec with Matchers {
 
   "Bank" should "customer summary" in {
     val bank: Bank = new Bank
-    var john: Customer = new Customer("John").openAccount(new CheckingAccount)
+    val john: Customer = new Customer("John").openAccount(new CheckingAccount)
     bank.addCustomer(john)
     bank.customerSummary should be("Customer Summary\n - John (1 account)")
+  }
+
+  it should "customer summary2" in {
+    val bank: Bank = new Bank
+    val john: Customer = new Customer("John").openAccount(new CheckingAccount)
+    val joe: Customer = new Customer("Joe").openAccount(new CheckingAccount).openAccount(new SavingsAccount)
+    bank.addCustomer(john)
+    bank.addCustomer(joe)
+    bank.customerSummary should be("Customer Summary\n - John (1 account)\n - Joe (2 accounts)")
+  }
+
+  it should "get First Customer Name" in {
+    val bank: Bank = new Bank
+    bank.getFirstCustomer should be("None")
+    val john: Customer = new Customer("John").openAccount(new CheckingAccount)
+    bank.addCustomer(john)
+    bank.getFirstCustomer should be ("John")
   }
 
   it should "checking account" in {
