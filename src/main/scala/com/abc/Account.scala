@@ -1,6 +1,8 @@
 package com.abc
 
 
+import java.util.Date
+
 import scala.collection.mutable.ListBuffer
 
 object Account {
@@ -19,6 +21,10 @@ object Account {
   def exceedsBalanceExeption(amount: Double ) = new IllegalArgumentException(s"Amount ${amount} exceeds balance")
 }
 
+object AccountStatementType extends Enumeration {
+  type statementType = Value
+  val Checking_Account , Savings_Account, MaxiSavings_Account = Value
+}
 sealed trait Account {
 
 
@@ -30,43 +36,50 @@ sealed trait Account {
   def getBalance = accountId.synchronized { balance }
 
 
-  def deposit(amount: Double): Unit = {
+  def deposit(amount: Double, txDate: Date = DateUtils.now): Account = {
     accountId.synchronized {
       Condition.check((amount <= 0), Account.negativeAmountException(amount))
-      transactions += Deposit(amount)
+      transactions += Deposit(amount, txDate)
       recomputeBalance
     }
+    this
   }
 
-  def withdraw(amount: Double) {
+  def withdraw(amount: Double, txDate: Date = DateUtils.now): Account = {
     accountId.synchronized {
       Condition.check((amount <= 0), Account.negativeAmountException(amount))
-      transactions += Withdrawl(-amount)
+      transactions += Withdraw(-amount, txDate)
       recomputeBalance
     }
+    this
   }
 
-  def transferTo(other: Account, amount: Double): Unit = {
+  def transferTo(other: Account, amount: Double, txDate: Date = DateUtils.now): Account = {
     accountId.synchronized {
       Condition.check((amount <= 0), Account.negativeAmountException(amount))
       Condition.check((amount > balance), Account.exceedsBalanceExeption(amount))
       other.accountId.synchronized {
-        transactions += TransferFrom(-amount, accountId, other.accountId)
+        transactions += TransferFrom(-amount, accountId, other.accountId, txDate)
         recomputeBalance
-        other.transactions += TransferTo(amount, accountId, other.accountId)
+        other.transactions += TransferTo(amount, accountId, other.accountId, txDate)
         other.recomputeBalance
       }
     }
+    this
   }
-
 
 
   def statementForAccount: String = {
-    val transactionSummary = transactions.map(t => t.transactionType + " " + FormatUtils.toDollars(t.amount.abs))
-      .mkString("  ", "\n  ", "\n")
-    val totalSummary = s"Total ${FormatUtils.toDollars(transactions.map(_.amount).sum)}"
+    val transactionSummary = transactions.map(t => {
+      val tranDollars = FormatUtils.toDollars(t.amount.abs)
+      s"${t.transactionType} ${tranDollars}"}
+    ).mkString("  ", "\n  ", "\n")
+
+    val totalDollars = FormatUtils.toDollars(sumTransactions)
+    val totalSummary = s"Total ${totalDollars}"
     statementType + "\n" + transactionSummary + totalSummary
   }
+
 
   def sumTransactions: Double = accountId.synchronized { transactions.map(_.amount).sum }
   def recomputeBalance: Unit = {
@@ -80,13 +93,13 @@ sealed trait Account {
       amount * Account.CheckingInterest
    }
 
-  def statementType: String
+  def statementType: AccountStatementType.statementType
 
 }
 
 case class CheckingAccount() extends Account {
 
-  override def statementType: String = "Checking Account"
+  override def statementType = AccountStatementType.Checking_Account
 }
 
 case class SavingsAccount() extends Account {
@@ -99,7 +112,7 @@ case class SavingsAccount() extends Account {
       checkingInterest + savingsInterest
       }
   }
-  override def statementType: String = "Savings Account"
+  override def statementType = AccountStatementType.Savings_Account
 }
 
 
@@ -109,7 +122,8 @@ case class MaxiSavingsAccount() extends Account {
   override protected[this] def interestEarned(amount: Double): Double = {
     accountId.synchronized {
       Condition.check((amount <= 0), Account.negativeAmountException(amount))
-      if (amount <= Account.MaxiThreshold1) amount * Account.MaxiRate1
+      if (isWithdrawlWithingDays(Account.MaxiSavingsWithdrawlDays)) super.interestEarned(amount)
+      else if (amount <= Account.MaxiThreshold1) amount * Account.MaxiRate1
       else if (amount <= Account.MaxiThreshold2) (Account.MaxiThreshold1 * Account.MaxiRate1) + (amount - Account.MaxiThreshold1) * Account.MaxiRate2
       else {
         val interestTier1 = Account.MaxiThreshold1 * Account.MaxiRate1
@@ -120,5 +134,11 @@ case class MaxiSavingsAccount() extends Account {
     }
   }
 
-  override def statementType: String = "MaxiSavings Account"
+  override def statementType = AccountStatementType.MaxiSavings_Account
+
+  def isWithdrawlWithingDays(days: Int): Boolean = {
+    val withdrawls = transactions.filter(t => (!(t.isInstanceOf[Deposit] || t.isInstanceOf[TransferTo]))
+      && DateUtils.getDaysDiff(t.transactionDate, DateUtils.now) < days)
+    (withdrawls.size > 0)
+  }
 }

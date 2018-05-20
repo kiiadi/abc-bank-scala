@@ -53,4 +53,17 @@ class BankTest extends FlatSpec with Matchers {
     bank.totalInterestPaid should be(170.0)
   }
 
+  it should "maxi savings account with Withdrawl" in {
+    val bank: Bank = new Bank
+    val account: Account = new MaxiSavingsAccount
+    bank.addCustomer(new Customer("Bill").openAccount(account))
+    account.deposit(3000.0, DateUtils.getDaysAgo(365))
+    account.withdraw(100, DateUtils.getDaysAgo(11))
+    bank.totalInterestPaid should be(160)
+    account.withdraw(100, DateUtils.getDaysAgo(9))
+    bank.totalInterestPaid - 2.8 should be < .001
+  }
+
+
+
 }
