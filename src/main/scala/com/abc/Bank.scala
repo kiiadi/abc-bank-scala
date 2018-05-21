@@ -9,35 +9,17 @@ class Bank {
     customers += customer
   }
 
-  def customerSummary: String = {
-    var summary: String = "Customer Summary"
-    for (customer <- customers)
-      summary = summary + "\n - " + customer.name + " (" + format(customer.numberOfAccounts, "account") + ")"
-    summary
-  }
-
-  private def format(number: Int, word: String): String = {
-    number + " " + (if (number == 1) word else word + "s")
-  }
-
-  def totalInterestPaid: Double = {
-    var total: Double = 0
-    for (c <- customers) total += c.totalInterestEarned
-    return total
-  }
-
-  def getFirstCustomer: String = {
-    try {
-      customers = null
-      customers(0).name
-    }
-    catch {
-      case e: Exception => {
-        e.printStackTrace
-        return "Error"
+  def customerSummary: String =  customers.foldLeft("Customer Summary"){
+      (summary: String, c: Customer) => {
+        val accounts = FormatUtils.formatPlural(c.numberOfAccounts, "account")
+        val summaryLine = s"\n - ${c.name} (${accounts})"
+        summary + summaryLine
       }
-    }
   }
+
+  def totalInterestPaid: Double = customers.foldLeft(0.0)((sum, c) => sum + c.totalInterestEarned)
+  def getFirstCustomer: String = customers.headOption.map(_.name).getOrElse("None")
+
 
 }
 
