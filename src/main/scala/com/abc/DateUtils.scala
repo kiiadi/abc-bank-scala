@@ -8,9 +8,9 @@ object DateUtils {
 
   def now: Date = return Calendar.getInstance.getTime
 
-  def getDaysDiff(date1: Date, date2: Date) =  {
+  def getDaysDiff(date1: Date, date2: Date): Int =  {
     val d = Duration.between(date1.toInstant() , date2.toInstant)
-    d.toDays
+    d.toDays.toInt
   }
 
   def getDaysAgo(days: Int): Date = {
@@ -19,11 +19,11 @@ object DateUtils {
     cal.getTime();
   }
 
+  val lastYear: Date = DateUtils.getDaysAgo(365)
+
   def main(args: Array[String]): Unit = {
     print(getDaysDiff(getDaysAgo(10), now))
   }
-
-
 
 }
 

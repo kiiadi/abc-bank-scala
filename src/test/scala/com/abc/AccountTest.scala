@@ -1,5 +1,7 @@
 package com.abc
 
+import java.util.Date
+
 import org.scalatest.{FlatSpec, Matchers}
 
 
@@ -40,20 +42,19 @@ class AccountTest extends FlatSpec with Matchers {
     val sav: Account = new SavingsAccount
     val max: Account = new MaxiSavingsAccount
     val max2: Account = new MaxiSavingsAccount
-    chk.deposit(1000.00).withdraw(500.00).deposit(1500.00)
-    sav.deposit(2000.00).withdraw(1000.00).deposit(500.0)
-    max.deposit(3000.00).withdraw(1000.00).transferTo(chk,1000.00)
-    max2.deposit(3000)
+    val lastYear: Date = DateUtils.getDaysAgo(365)
+    chk.deposit(1000.00, lastYear).withdraw(500.00,lastYear).deposit(1500.00, lastYear)
+    sav.deposit(2000.00,lastYear).withdraw(1000.00,lastYear).deposit(500.0, lastYear)
+    max.deposit(3000.00,lastYear).withdraw(1000.00, lastYear).transferTo(chk,1000.00,lastYear).deposit(2000, lastYear)
     chk.getBalance should be(3000)
     chk.transactions.size should be(4)
-    chk.interestEarned should be(3.0)
+    chk.interestEarned - 3 should be < .001
     sav.getBalance should be(1500)
     sav.transactions.size should be(3)
-    sav.interestEarned should be(2.0)
-    max.getBalance should be(1000)
-    max.transactions.size should be(3)
-    max.interestEarned should be(1.0)
-    max2.interestEarned should be (170)
+    sav.interestEarned - 2 should be < .001
+    max.getBalance should be(3000)
+    max.transactions.size should be(4)
+    max.interestEarned should be(170)
   }
 
 

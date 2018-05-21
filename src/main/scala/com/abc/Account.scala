@@ -3,7 +3,9 @@ package com.abc
 
 import java.util.Date
 
+
 import scala.collection.mutable.ListBuffer
+import scala.math._
 
 object Account {
   val CheckingInterest = 0.001
@@ -11,6 +13,7 @@ object Account {
   val MaxiRate1 = 0.02
   val MaxiRate2 = 0.05
   val MaxiRate3 = 0.10
+  val OneYearDays = 365
   val checkingThreshold = 1000
   val MaxiThreshold1 = 1000
   val MaxiThreshold2 = 2000
@@ -22,8 +25,9 @@ object Account {
 
 object AccountStatementType extends Enumeration {
   type statementType = Value
-  val Checking_Account , Savings_Account, MaxiSavings_Account = Value
+  val Checking_Account , Savings_Account, MaxiSavings_Account, MaxiSaving_Account_Adj = Value
 }
+
 sealed trait Account {
 
   val accountId = FormatUtils.getNewId
@@ -77,23 +81,45 @@ sealed trait Account {
     statementType + "\n" + transactionSummary + totalSummary
   }
 
-  def interestEarned: Double = interestEarned(getBalance)
+  def interestEarned: Double = interestEarnedByTransactions
   def sumTransactions: Double = accountId.synchronized { transactions.map(_.amount).sum }
   protected def recomputeBalance: Unit = {
     accountId.synchronized { balance = sumTransactions }
   }
 
+  def interestEarnedByTransactions: Double = {
+    var currentBalance = 0.0;
+    var currentInterest = 0.0;
+    val now = DateUtils.now
+    var lastDate = now
+    for (t <- transactions) {
+      if (currentBalance == 0.0 && DateUtils.getDaysDiff(lastDate, now) == 0) {
+        lastDate = t.transactionDate
+        currentBalance += t.amount
+      } else {
+
+        currentInterest += interestEarned(currentBalance, lastDate, t.transactionDate)
+        currentBalance += t.amount
+        lastDate = t.transactionDate
+      }
+    }
+    if (lastDate != now && currentBalance != 0.0) {
+      currentInterest += interestEarned(currentBalance, lastDate, now)
+    }
+    currentInterest
+  }
+
+
   /**
     * Virtural Method, defaults to Checking Account Rate
     */
-  protected[this] def interestEarned(amount: Double): Double = {
+  protected[this] def interestEarned(amount: Double, startDate:Date, endDate:Date): Double = {
     Condition.check((amount <= 0), Account.negativeAmountException(amount))
-    amount * Account.CheckingInterest
+    val days = DateUtils.getDaysDiff(startDate, endDate)
+    amount * Account.CheckingInterest/Account.OneYearDays * days
   }
-
   // Pure Virtual implemented by Acccount Type
   def statementType: AccountStatementType.statementType
-
 }
 
 case class CheckingAccount() extends Account {
@@ -103,41 +129,71 @@ case class CheckingAccount() extends Account {
 
 case class SavingsAccount() extends Account {
 
-  override protected[this] def interestEarned(amount: Double): Double = {
+  override protected[this] def interestEarned(amount: Double, startDate: Date, endDate: Date): Double = {
     Condition.check((amount <= 0), Account.negativeAmountException(amount))
-    if (amount < Account.checkingThreshold) super.interestEarned(amount)
+    val days = DateUtils.getDaysDiff(startDate, endDate)
+    if (amount <= Account.checkingThreshold) super.interestEarned(amount, startDate, endDate)
     else {
-      val checkingInterest = super.interestEarned(Account.checkingThreshold)
-      val savingsInterest = (amount- Account.checkingThreshold) * Account.SavigsInterest
+      val checkingInterest = super.interestEarned(Account.checkingThreshold, startDate, endDate)
+      val savingsInterest = (amount- Account.checkingThreshold) * Account.SavigsInterest/Account.OneYearDays * days
       checkingInterest + savingsInterest
-      }
+    }
   }
   override def statementType = AccountStatementType.Savings_Account
 }
 
-
 case class MaxiSavingsAccount() extends Account {
 
-  override protected[this] def interestEarned(amount: Double): Double = {
-    accountId.synchronized {
-      Condition.check((amount <= 0), Account.negativeAmountException(amount))
-      if (isWithdrawlWithingDays(Account.MaxiSavingsWithdrawlDays)) super.interestEarned(amount)
-      else if (amount <= Account.MaxiThreshold1) amount * Account.MaxiRate1
-      else if (amount <= Account.MaxiThreshold2) (Account.MaxiThreshold1 * Account.MaxiRate1) + (amount - Account.MaxiThreshold1) * Account.MaxiRate2
-      else {
-        val interestTier1 = Account.MaxiThreshold1 * Account.MaxiRate1
-        val interestTier2 = (Account.MaxiThreshold2 - Account.MaxiThreshold1) * Account.MaxiRate2
-        val interestTier3 = (amount - Account.MaxiThreshold2) * Account.MaxiRate3
-        interestTier1 + interestTier2 + interestTier3
-      }
+  /** Original MaxiSavings Account with three Rates and No Adjustment */
+  override protected[this] def interestEarned(amount: Double, startDate: Date, endDate: Date): Double = {
+    Condition.check((amount <= 0), Account.negativeAmountException(amount))
+    val days = DateUtils.getDaysDiff(startDate, endDate)
+    if (amount <= Account.MaxiThreshold1) amount * Account.MaxiRate1 / Account.OneYearDays * days
+    else if (amount <= Account.MaxiThreshold2) {
+      (Account.MaxiThreshold1 * Account.MaxiRate1 / Account.OneYearDays * days) +
+        ((amount - Account.MaxiThreshold1) * Account.MaxiRate2 / Account.OneYearDays * days)
+    }
+    else {
+      val interestTier1 = Account.MaxiThreshold1 * Account.MaxiRate1 / Account.OneYearDays * days
+      val interestTier2 = (Account.MaxiThreshold2 - Account.MaxiThreshold1) * Account.MaxiRate2 / Account.OneYearDays * days
+      val interestTier3 = (amount - Account.MaxiThreshold2) * Account.MaxiRate3 / Account.OneYearDays * days
+      interestTier1 + interestTier2 + interestTier3
     }
   }
 
   override def statementType = AccountStatementType.MaxiSavings_Account
-
-  def isWithdrawlWithingDays(days: Int): Boolean = {
-    val withdrawls = transactions.filter(t => (!(t.isInstanceOf[Deposit] || t.isInstanceOf[TransferTo]))
-      && DateUtils.getDaysDiff(t.transactionDate, DateUtils.now) < days)
-    (withdrawls.size > 0)
-  }
 }
+
+case class MaxiSavingsAccountAdj() extends Account {
+
+  /**
+    * Adjustable MaxiSavingsAccount, Change Interest Rate to .5 unless a withdraw or transferFrom has happend in the last 10 Days, then drop the rate
+    * for 10 days to .001
+    */
+  override protected[this] def interestEarned(amount: Double, startDate: Date, endDate: Date): Double = {
+      Condition.check((amount <= 0), Account.negativeAmountException(amount))
+      val days = DateUtils.getDaysDiff(startDate, endDate)
+      val withdrawDays = getWithdrawDaysInPeriod(startDate, Account.MaxiSavingsWithdrawlDays)
+      if (withdrawDays > days) super.interestEarned(amount, startDate, endDate)
+      else if (withdrawDays == 0) Account.MaxiRate2/Account.OneYearDays * amount * days
+      else if (amount <= Account.MaxiThreshold1) amount * Account.MaxiRate1/Account.OneYearDays * days
+      else {
+        val interestTier1 = amount * Account.MaxiRate1/Account.OneYearDays*withdrawDays
+        val interestTier2 = amount * Account.MaxiRate2/Account.OneYearDays*(days - withdrawDays)
+        interestTier1 + interestTier2
+      }
+    }
+
+  def getWithdrawDaysInPeriod(startDate: Date, days: Int): Int = {
+    val withdraws = transactions.filter(t => (!(t.isInstanceOf[Deposit] || t.isInstanceOf[TransferTo]))
+      && DateUtils.getDaysDiff(t.transactionDate, startDate) < days)
+    val minDaysFromStart  = withdraws
+      .map(t => DateUtils.getDaysDiff(t.transactionDate, startDate).toInt)
+      .reduceLeft(_ min _)
+
+    days - minDaysFromStart
+  }
+
+  override def statementType = AccountStatementType.MaxiSaving_Account_Adj
+}
+
